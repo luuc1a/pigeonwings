@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head lang="de">
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- Here we set the viewport so the device knows that this page is not one that can scale/zoom-->
+    <meta name="viewport" content="width=device-width; height=device-height; initial-scale=1.0; maximum-scale=1.0; minimum-scale=1.0; user-scalable=0;" />
+
+    <script type="text/javascript" src="LAB.min.js"></script>
+    <script type="text/javascript" >
+        $LAB.script('input/Mouse.js')
+        .wait().script('Animation.js')
+        .wait().script('Celebration.js')
+        .wait().script('CurrentMove.js')
+        .wait().script('Card.js')
+        .wait().script('PlayingField.js')
+        .wait().script('GameLoop.js')
+        .wait().script('Helper.js')
+        .wait().script('setUp.js');
+
+    </script>
+</head>
+
+<body id="myBody" scroll=no>
+
+<div class="layout">
+
+<div class="menu">
+    <h1> <i>fiber</i> BUSENMEMORY </h1>
+   <ul class="menu">
+       <li><button class="menu" onclick="init({numberOfCards:30});"> busen </button></li>
+       <li><button class="menu" onclick="init({numberOfCards:60});"> many busen </button></li>
+       <li><button class="menu" onclick="init({numberOfCards:90});"> quite a lot of busen </button></li>
+   </ul>
+</div>
+    <div class="created">created by ...</div>
+</div>
+
+</body>
+
+</html>

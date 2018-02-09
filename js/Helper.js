@@ -1,24 +1,11 @@
 "use strict";
 
-var imagesStillLoading = 0;
-
-function loadImage(imageName){
-    var image = new Image();
-    image.src = imageName;
-    imagesStillLoading+=1;
-    image.onload = function () {
-        imagesStillLoading -= 1;
-    };
-    return image;
-}
-
-function assetLoadingLoop() {
-    if (imagesStillLoading > 0)
-        window.setTimeout(assetLoadingLoop, 1000 / 60);
-    else {
-        mainLoop();
-    }
-}
+/***************************************************************/
+var LOGGING = {};
+// 0 = off, 1 = debug, 2 = trace (freezes)
+LOGGING.level = 1;
+if(LOGGING.level >= 1) console.log("LOGGING.level = " + LOGGING.level);
+/***************************************************************/
 
 function scaleSize(maxW, maxH, currW, currH){
     var ratio = currH / currW;

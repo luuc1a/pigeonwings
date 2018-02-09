@@ -15,8 +15,7 @@ window.requestAnimFrame = (function(){
 })();
 
 // namespace for the game
-var STAGE = {
-
+var GAME = {
     // set up some inital values
     WIDTH: 320, 
     HEIGHT:  480, 
@@ -44,41 +43,39 @@ var STAGE = {
     android: null,
     ios:  null,
 
-    img_brenda: null,
+    imagesStillLoading : 0,
 
     init: function() {
-   
+		if(LOGGING.level >= 1) console.log("called GAME.init()");
+		   
         // the proportion of width to height
-        STAGE.RATIO = STAGE.WIDTH / STAGE.HEIGHT;
+        GAME.RATIO = GAME.WIDTH / GAME.HEIGHT;
         // these will change when the screen is resize
-        STAGE.currentWidth = STAGE.WIDTH;
-        STAGE.currentHeight = STAGE.HEIGHT;
+        GAME.currentWidth = GAME.WIDTH;
+        GAME.currentHeight = GAME.HEIGHT;
         // this is our canvas element
-        STAGE.canvas = document.getElementsByTagName('canvas')[0];
+        GAME.canvas = document.getElementsByTagName('canvas')[0];
         // it's important to set this
         // otherwise the browser will
         // default to 320x200
-        STAGE.canvas.width = STAGE.WIDTH;
-        STAGE.canvas.height = STAGE.HEIGHT;
+        GAME.canvas.width = GAME.WIDTH;
+        GAME.canvas.height = GAME.HEIGHT;
         // the canvas context allows us to 
         // interact with the canvas api
-        STAGE.ctx = STAGE.canvas.getContext('2d');
+        GAME.ctx = GAME.canvas.getContext('2d');
         // we need to sniff out android & ios
         // so we can hide the address bar in
         // our resize function
-        //STAGE.ua = navigator.userAgent.toLowerCase();
-        //STAGE.android = STAGE.ua.indexOf('android') > -1 ? true : false;
-        //STAGE.ios = ( STAGE.ua.indexOf('iphone') > -1 || STAGE.ua.indexOf('ipad') > -1  ) ? true : false;
+        //GAME.ua = navigator.userAgent.toLowerCase();
+        //GAME.android = GAME.ua.indexOf('android') > -1 ? true : false;
+        //GAME.ios = ( GAME.ua.indexOf('iphone') > -1 || GAME.ua.indexOf('ipad') > -1  ) ? true : false;
 
-        STAGE.img_brenda = new Image();
-        STAGE.img_brenda.src = "../res/brenda_sprite.png";
-
-        STAGE.entities.push(new STAGE.Brenda());
+        GAME.entities.push(new GAME.Brenda());
 
         // listen for clicks
         window.addEventListener('click', function(e) {
             e.preventDefault();
-            STAGE.Input.set(e);
+            GAME.Input.set(e);
         }, false);
 
         // listen for touches
@@ -87,7 +84,7 @@ var STAGE = {
             // the event object has an array
             // called touches, we just want
             // the first touch
-            STAGE.Input.set(e.touches[0]);
+            GAME.Input.set(e.touches[0]);
         }, false);
         window.addEventListener('touchmove', function(e) {
             // we're not interested in this
@@ -102,40 +99,68 @@ var STAGE = {
         }, false);
 
         // we're ready to resize
-        STAGE.resize();
+        GAME.resize();
 
-        STAGE.loop();
-
+		// loop asset loading
+		GAME.assetLoadingLoop();
+		
     },
 
+	loadImage : function(imagePath) {
+		if(LOGGING.level >= 1) console.log("called GAME.loadImage( " + imagePath + " )");
+		
+		var image = new Image();
+		GAME.imagesStillLoading += 1;
+    
+		image.onload = function() {
+			GAME.imagesStillLoading -= 1;
+		};
+		
+		image.src = imagePath;
+		    
+		return image;
+	},
+
+	assetLoadingLoop : function() {
+		if(LOGGING.level >= 1) console.log("called GAME.assetLoadingLoop");
+
+		if (GAME.imagesStillLoading > 0){
+			if(LOGGING.level >= 1) console.log("GAME.imagesStillLoading = " + GAME.imagesStillLoading +" > 0");
+			window.setTimeout(GAME.assetLoadingLoop, 1000 / 60);
+		}
+		else {
+			GAME.loop();
+		}
+	},
 
     resize: function() {
-    
-        STAGE.currentHeight = window.innerHeight;
+  		if(LOGGING.level >= 1) console.log("called GAME.resize()");
+
+        GAME.currentHeight = window.innerHeight;
         // resize the width in proportion
         // to the new height
-        STAGE.currentWidth = STAGE.currentHeight * STAGE.RATIO;
+        GAME.currentWidth = GAME.currentHeight * GAME.RATIO;
 
         // this will create some extra space on the
         // page, allowing us to scroll pass
         // the address bar, and thus hide it.
-        //if (STAGE.android || STAGE.ios) {
+        //if (GAME.android || GAME.ios) {
         //    document.body.style.height = (window.innerHeight + 50) + 'px';
         //}
 
         // set the new canvas style width & height
         // note: our canvas is still 320x480 but
         // we're essentially scaling it with CSS
-        STAGE.canvas.style.width = STAGE.currentWidth + 'px';
-        STAGE.canvas.style.height = STAGE.currentHeight + 'px';
+        GAME.canvas.style.width = GAME.currentWidth + 'px';
+        GAME.canvas.style.height = GAME.currentHeight + 'px';
 
         // the amount by which the css resized canvas
         // is different to the actual (480x320) size.
-        STAGE.scale = STAGE.currentWidth / STAGE.WIDTH;
+        GAME.scale = GAME.currentWidth / GAME.WIDTH;
         // position of canvas in relation to
         // the screen
-        STAGE.offset.top = STAGE.canvas.offsetTop;
-        STAGE.offset.left = STAGE.canvas.offsetLeft;
+        GAME.offset.top = GAME.canvas.offsetTop;
+        GAME.offset.left = GAME.canvas.offsetLeft;
 
         // we use a timeout here as some mobile
         // browsers won't scroll if there is not
@@ -148,28 +173,28 @@ var STAGE = {
     // this is where all entities will be moved
     // and checked for collisions etc
     update: function() {
-
+		if(LOGGING.level >= 2) console.log("called GAME.update()");
         // if the user has tapped the screen
-        if (STAGE.Input.tapped) {
-            console.debug("user tapped screen")
+        if (GAME.Input.tapped) {
+            if(LOGGING.level >= 2) console.debug("GAME.Input.tapped is true")
             // keep track of taps; needed to 
             // calculate accuracy
-            STAGE.score.taps += 1;
+            GAME.score.taps += 1;
             // add a new touch
-            STAGE.entities.push(new STAGE.Touch(STAGE.Input.x, STAGE.Input.y));
+            GAME.entities.push(new GAME.Touch(GAME.Input.x, GAME.Input.y));
             // set tapped back to false
             // to avoid spawning a new touch
             // in the next cycle
-            STAGE.Input.tapped = false;
+            GAME.Input.tapped = false;
         }
 
         // cycle through all entities and update as necessary
-        for (var i = 0; i < STAGE.entities.length; i += 1) {
-            STAGE.entities[i].update();
+        for (var i = 0; i < GAME.entities.length; i += 1) {
+            GAME.entities[i].update();
             // delete from array if remove property
             // flag is set to true
-            if (STAGE.entities[i].remove) {
-                STAGE.entities.splice(i, 1);
+            if (GAME.entities[i].remove) {
+                GAME.entities.splice(i, 1);
             }
         }
 
@@ -178,24 +203,24 @@ var STAGE = {
 
     // this is where we draw all the entities
     render: function() {
-
+		if(LOGGING.level >= 2) console.log("called GAME.render()");
         // draw the background
-        STAGE.Draw.rect(0, 0, STAGE.WIDTH, STAGE.HEIGHT, '#036');
-        STAGE.Draw.circle(
-                        STAGE.WIDTH/2, 
-                        STAGE.HEIGHT/2,
+        GAME.Draw.rect(0, 0, GAME.WIDTH, GAME.HEIGHT, '#036');
+        GAME.Draw.circle(
+                        GAME.WIDTH/2, 
+                        GAME.HEIGHT/2,
                         10, 
                         '#fff'); 
 
         // cycle through all entities and render to canvas
-        for (var i = 0; i < STAGE.entities.length; i += 1) {
-            STAGE.entities[i].render();
+        for (var i = 0; i < GAME.entities.length; i += 1) {
+            GAME.entities[i].render();
         }
 
         // display scores
-        STAGE.Draw.text('Hit: ' + STAGE.score.hit, 20, 30, 14, '#fff');
-        STAGE.Draw.text('Escaped: ' + STAGE.score.escaped, 20, 50, 14, '#fff');
-        STAGE.Draw.text('Accuracy: ' + STAGE.score.accuracy + '%', 20, 70, 14, '#fff');
+        GAME.Draw.text('Hit: ' + GAME.score.hit, 20, 30, 14, '#fff');
+        GAME.Draw.text('Escaped: ' + GAME.score.escaped, 20, 50, 14, '#fff');
+        GAME.Draw.text('Accuracy: ' + GAME.score.accuracy + '%', 20, 70, 14, '#fff');
 
     },
 
@@ -205,11 +230,12 @@ var STAGE = {
     // then proceeds to update
     // and render
     loop: function() {
-        
-        requestAnimFrame( STAGE.loop );
+		if(LOGGING.level >= 2) console.log("called GAME.loop()");
 
-        STAGE.update();
-        STAGE.render();
+        requestAnimFrame( GAME.loop );
+
+        GAME.update();
+        GAME.render();
 
     }
 
@@ -218,36 +244,36 @@ var STAGE = {
 
 // abstracts various canvas operations into
 // standalone functions
-STAGE.Draw = {
+GAME.Draw = {
 
     clear: function() {
-        STAGE.ctx.clearRect(0, 0, STAGE.WIDTH, STAGE.HEIGHT);
+        GAME.ctx.clearRect(0, 0, GAME.WIDTH, GAME.HEIGHT);
     },
 
 
     rect: function(x, y, w, h, col) {
-        STAGE.ctx.fillStyle = col;
-        STAGE.ctx.fillRect(x, y, w, h);
+        GAME.ctx.fillStyle = col;
+        GAME.ctx.fillRect(x, y, w, h);
     },
 
     circle: function(x, y, r, col) {
-        STAGE.ctx.fillStyle = col;
-        STAGE.ctx.beginPath();
-        STAGE.ctx.arc(x + 5, y + 5, r, 0,  Math.PI * 2, true);
-        STAGE.ctx.closePath();
-        STAGE.ctx.fill();
+        GAME.ctx.fillStyle = col;
+        GAME.ctx.beginPath();
+        GAME.ctx.arc(x + 5, y + 5, r, 0,  Math.PI * 2, true);
+        GAME.ctx.closePath();
+        GAME.ctx.fill();
     },
 
 
     text: function(string, x, y, size, col) {
-        STAGE.ctx.font = 'bold '+size+'px Monospace';
-        STAGE.ctx.fillStyle = col;
-        STAGE.ctx.fillText(string, x, y);
+        GAME.ctx.font = 'bold '+size+'px Monospace';
+        GAME.ctx.fillStyle = col;
+        GAME.ctx.fillText(string, x, y);
     },
     
     image: function( sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-        STAGE.ctx.drawImage(
-            STAGE.img_brenda, 
+        GAME.ctx.drawImage(
+            GAME.img_brenda, 
             //source rectangle
             sx, sy, sWidth, sHeight,
             //desitnation rect
@@ -256,26 +282,32 @@ STAGE.Draw = {
 
 };
 
-
-
-STAGE.Input = {
+GAME.Input = {
 
     x: 0,
     y: 0,
     tapped :false,
 
     set: function(data) {
-        this.x = (data.pageX - STAGE.offset.left) / STAGE.scale;
-        this.y = (data.pageY - STAGE.offset.top) / STAGE.scale;
+        this.x = (data.pageX - GAME.offset.left) / GAME.scale;
+        this.y = (data.pageY - GAME.offset.top) / GAME.scale;
         this.tapped = true;
 
     }
 
 };
 
-STAGE.Touch = function(x, y) {
+GAME.Brenda = function(){ 
 
-    console.log("touch " + x + " " + y );
+	this.brenda = new Brenda();
+	this.update = function(){this.brenda.update();};
+	this.render = function(){this.brenda.render();};
+		
+};
+
+GAME.Touch = function(x, y) {
+
+    if(LOGGING.level >= 1) console.log("called GAME.Touch: x = " + x + ", y = " + y );
 
     this.type = 'touch';    // we'll need this later
     this.x = x;             // the x coordinate
@@ -294,38 +326,10 @@ STAGE.Touch = function(x, y) {
     };
 
     this.render = function() {
-        STAGE.Draw.circle(this.x, this.y, this.r, 'rgba(255,0,0,'+this.opacity+')');
+        GAME.Draw.circle(this.x, this.y, this.r, 'rgba(255,0,0,'+this.opacity+')');
     };
 
 };
 
-STAGE.Brenda = function() {
-
-console.log("called Brenda");
-
-    this.spriteWidth=100;
-    this.spriteHeight=85;
-
-    this.x_pos = 7; // current x position
-    this.y_pos = 400; // y position - will never change as brenda can't jump
-
-    this.update = function(){};
-    this.render = function(){
-
-console.log("called Brenda.render");
-
-        //void ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
-        // s* .. source rectangle from image, d* .. destination on canvas
-        STAGE.Draw.image(
-            
-            //source rectangle
-            0,0,100,85,
-            //desitnation rect
-            this.x_pos, this.y_pos, this.x_pos + this.spriteWidth, this.y_pos + this.spriteHeight );
-
-    };
-
-};
-
-window.addEventListener('load', STAGE.init, false);
-window.addEventListener('resize', STAGE.resize, false);
+window.addEventListener('load', GAME.init, false);
+window.addEventListener('resize', GAME.resize, false);

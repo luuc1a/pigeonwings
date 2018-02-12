@@ -70,8 +70,12 @@ var GAME = {
         //GAME.android = GAME.ua.indexOf('android') > -1 ? true : false;
         //GAME.ios = ( GAME.ua.indexOf('iphone') > -1 || GAME.ua.indexOf('ipad') > -1  ) ? true : false;
 
-        GAME.entities.push(new GAME.Brenda());
-
+		GAME.brenda = new Brenda();
+        GAME.entities.push(GAME.brenda);
+        GAME.entities.push(new GAME.Button(0,GAME.HEIGHT, "/home/lechner/Development/pigeonwings/res/to_the_left.png"));
+//        GAME.entities.push(new GAME.Button(GAME.WIDTH/2,GAME.HEIGHT));
+//        GAME.entities.push(new GAME.Button(GAME.WIDTH,GAME.HEIGHT));
+                
         // listen for clicks
         window.addEventListener('click', function(e) {
             e.preventDefault();
@@ -129,6 +133,9 @@ var GAME = {
 			window.setTimeout(GAME.assetLoadingLoop, 1000 / 60);
 		}
 		else {
+			for(var i=0; i< GAME.entities.length; i++)
+				if(GAME.entities[i].type != 'touch')
+					GAME.entities[i].init();
 			GAME.loop();
 		}
 	},
@@ -174,6 +181,10 @@ var GAME = {
     // and checked for collisions etc
     update: function() {
 		if(LOGGING.level >= 2) console.log("called GAME.update()");
+		var currentTime = new Date().getTime();
+		var smthWasClicked = false; // we only need to check for a collision
+                                    // if the user tapped on this game tick
+		
         // if the user has tapped the screen
         if (GAME.Input.tapped) {
             if(LOGGING.level >= 2) console.debug("GAME.Input.tapped is true")
@@ -182,21 +193,32 @@ var GAME = {
             GAME.score.taps += 1;
             // add a new touch
             GAME.entities.push(new GAME.Touch(GAME.Input.x, GAME.Input.y));
+            
             // set tapped back to false
             // to avoid spawning a new touch
             // in the next cycle
             GAME.Input.tapped = false;
+            smthWasClicked = true;
         }
 
         // cycle through all entities and update as necessary
         for (var i = 0; i < GAME.entities.length; i += 1) {
-            GAME.entities[i].update();
+            
+            if(GAME.entities[i].type == 'button' && smthWasClicked){
+				var click = GAME.collides(GAME.entities[i], {x: GAME.Input.x, y: GAME.Input.y, r: 7});
+                if (click) {
+					GAME.brenda.hitByShit();		
+				}
+			}
+            
+            GAME.entities[i].update(currentTime);
             // delete from array if remove property
             // flag is set to true
             if (GAME.entities[i].remove) {
                 GAME.entities.splice(i, 1);
             }
-        }
+		
+		}
 
     },
 
@@ -241,6 +263,12 @@ var GAME = {
 
 };
 
+// checks if two entties are touching
+GAME.collides = function(a, b) {
+
+	return true;
+
+};
 
 // abstracts various canvas operations into
 // standalone functions
@@ -271,13 +299,8 @@ GAME.Draw = {
         GAME.ctx.fillText(string, x, y);
     },
     
-    image: function( sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-        GAME.ctx.drawImage(
-            GAME.img_brenda, 
-            //source rectangle
-            sx, sy, sWidth, sHeight,
-            //desitnation rect
-            dx, dy, dWidth, dHeight );
+    image: function(img, dx, dy) {
+        GAME.ctx.drawImage(img, dx, dy);
     }
 
 };
@@ -295,14 +318,6 @@ GAME.Input = {
 
     }
 
-};
-
-GAME.Brenda = function(){ 
-
-	this.brenda = new Brenda();
-	this.update = function(){this.brenda.update();};
-	this.render = function(){this.brenda.render();};
-		
 };
 
 GAME.Touch = function(x, y) {
@@ -327,6 +342,28 @@ GAME.Touch = function(x, y) {
 
     this.render = function() {
         GAME.Draw.circle(this.x, this.y, this.r, 'rgba(255,0,0,'+this.opacity+')');
+    };
+
+};
+
+GAME.Button = function(x, y, imagePath) {
+
+    if(LOGGING.level >= 1) console.log("called GAME.Button: x = " + x + ", y = " + y );
+
+    this.type = 'button';
+    this.x = x;             // the x coordinate
+    this.y = y;             // the y coordinate
+    this.img = GAME.loadImage(imagePath);
+	
+	this.init = function() {
+		if(LOGGING.level >= 1) console.log("called GAME.Button.init");
+		this.y = this.y-this.img.height;
+	};
+
+    this.update = function() {};
+
+    this.render = function() {
+        GAME.Draw.image(this.img, this.x, this.y);
     };
 
 };

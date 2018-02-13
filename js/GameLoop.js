@@ -205,7 +205,7 @@ var GAME = {
         for (var i = 0; i < GAME.entities.length; i += 1) {
             
             if(GAME.entities[i].type == 'button' && smthWasClicked){
-				var click = GAME.collides(GAME.entities[i], {x: GAME.Input.x, y: GAME.Input.y, r: 7});
+				var click = GAME.isClicked(GAME.entities[i], {x: GAME.Input.x, y: GAME.Input.y, r: 7});
                 if (click) {
 					GAME.brenda.hitByShit();		
 				}
@@ -263,9 +263,9 @@ var GAME = {
 
 };
 
-// checks if two entties are touching
-GAME.collides = function(a, b) {
-
+// checks if b is enclosed by a
+GAME.isClicked = function(a, b) {
+	b.x
 	return true;
 
 };
